@@ -106,8 +106,8 @@ object LazyValBenchmark extends PerformanceTest.Regression {
   performance of "LazyVals" config (
     exec.minWarmupRuns -> 50,
     exec.maxWarmupRuns -> 150,
-    exec.benchRuns -> 30,
-    exec.independentSamples -> 2,
+    exec.benchRuns -> 25,
+    exec.independentSamples -> 1,
     exec.jvmflags -> ""
   ) in {
     using(repetitions) curve("non-lazy") in { n =>
@@ -120,7 +120,7 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       }
     }
 
-    using(repetitions) curve("lazy") in { n =>
+    using(repetitions) curve("lazy-current") in { n =>
       var i = 0
       while (i < n) {
         val c = new LazyCell(i)
@@ -130,7 +130,7 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       }
     }
 
-    using(repetitions) curve("lazy-simulation") in { n =>
+    using(repetitions) curve("lazy-simulation-boolean-bitmap") in { n =>
       var i = 0
       while (i < n) {
         val c = new LazySimCell(i)
@@ -160,7 +160,7 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       }
     }
 
-    using(repetitions) curve("lazy-simulation-v2") in { n =>
+    using(repetitions) curve("lazy-simulation-v2-with-notify") in { n =>
       var i = 0
       while (i < n) {
         val c = new LazySimCellVersion2(i)
