@@ -9,7 +9,7 @@ import org.scalameter.api._
 object LazyValBenchmark extends PerformanceTest.Regression {
   def persistor = Persistor.None
 
-  val repetitions = Gen.range("repetitions")(1000000, 5000000, 1000000)
+  val repetitions = Gen.range("size")(1000000, 5000000, 1000000)
 
   class Cell(x: Int) {
     val value = 0
