@@ -104,6 +104,8 @@ object LazyValBenchmark extends PerformanceTest.Regression {
   var cell: AnyRef = null
 
   performance of "LazyVals" config (
+    exec.minWarmupRuns -> 50,
+    exec.maxWarmupRuns -> 150,
     exec.benchRuns -> 30,
     exec.independentSamples -> 2,
     exec.jvmflags -> ""
