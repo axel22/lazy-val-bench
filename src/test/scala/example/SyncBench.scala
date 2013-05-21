@@ -127,7 +127,7 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       }
       value_0
     }
-    def value = if (bitmap_0 == 2.toByte) value_0 else value_lzycompute()
+    def value = if (bitmap_0 == 3.toByte) value_0 else value_lzycompute()
   }
 
   var cell: AnyRef = null
