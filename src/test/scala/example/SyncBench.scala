@@ -106,16 +106,16 @@ object LazyValBenchmark extends PerformanceTest.Regression {
     var value_0: Int = _
     private def value_lzycompute(): Int = {
       this.synchronized {
-        if (bitmap_0 == 0.toByte) {
-          bitmap_0 = 1.toByte
-        } else {
-          if (bitmap_0 == 1.toByte) {
+        (bitmap_0: @annotation.switch) match {
+          case 0 =>
+            bitmap_0 = 1.toByte
+          case 1 =>
             bitmap_0 = 2.toByte
-          }
-          while (bitmap_0 == 2.toByte) {
-            this.wait()
-          }
-          return value_0
+            do this.wait() while (bitmap_0 == 2.toByte)
+            return value_0
+          case 2 =>
+            do this.wait() while (bitmap_0 == 2.toByte)
+            return value_0
         }
       }
       val result = 0
