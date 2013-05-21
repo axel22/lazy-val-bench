@@ -101,6 +101,35 @@ object LazyValBenchmark extends PerformanceTest.Regression {
     def value = if (bitmap_0 == 2.toByte) value_0 else value_lzycompute()
   }
 
+  final class LazySimCellVersion3(x: Int) {
+    @volatile var bitmap_0: Byte = 0.toByte
+    var value_0: Int = _
+    private def value_lzycompute(): Int = {
+      this.synchronized {
+        if (bitmap_0 == 0.toByte) {
+          bitmap_0 = 1.toByte
+        } else {
+          if (bitmap_0 == 1.toByte) {
+            bitmap_0 = 2.toByte
+          }
+          while (bitmap_0 == 2.toByte) {
+            this.wait()
+          }
+          return value_0
+        }
+      }
+      val result = 0
+      this.synchronized {
+        val oldstate = bitmap_0
+        value_0 = result
+        bitmap_0 = 3.toByte
+        if (oldstate == 2.toByte) this.notifyAll()
+      }
+      value_0
+    }
+    def value = if (bitmap_0 == 2.toByte) value_0 else value_lzycompute()
+  }
+
   var cell: AnyRef = null
 
   performance of "LazyVals" config (
@@ -164,6 +193,16 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       var i = 0
       while (i < n) {
         val c = new LazySimCellVersion2(i)
+        cell = c
+        c.value
+        i += 1
+      }
+    }
+
+    using(repetitions) curve("lazy-simulation-v3") in { n =>
+      var i = 0
+      while (i < n) {
+        val c = new LazySimCellVersion3(i)
         cell = c
         c.value
         i += 1
