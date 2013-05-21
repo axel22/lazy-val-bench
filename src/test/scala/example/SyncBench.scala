@@ -130,6 +130,33 @@ object LazyValBenchmark extends PerformanceTest.Regression {
     def value = if (bitmap_0 == 3.toByte) value_0 else value_lzycompute()
   }
 
+  final class LazySimCellVersion4(x: Int) extends java.util.concurrent.atomic.AtomicInteger {
+    var value_0: Int = _
+    @annotation.tailrec final def value(): Int = (get: @annotation.switch) match {
+      case 0 =>
+        if (compareAndSet(0, 1)) {
+          val result = 0
+          value_0 = result
+          if (getAndSet(3) != 1) synchronized { notify() }
+          result
+        } else value()
+      case 1 =>
+        compareAndSet(1, 2)
+        synchronized {
+          while (get != 3) wait()
+          notify()
+        }
+        value_0
+      case 2 =>
+        synchronized {
+          while (get != 3) wait()
+          notify()
+        }
+        value_0
+      case 3 => value_0
+    }
+  }
+
   var cell: AnyRef = null
 
   performance of "LazyVals" config (
@@ -203,6 +230,16 @@ object LazyValBenchmark extends PerformanceTest.Regression {
       var i = 0
       while (i < n) {
         val c = new LazySimCellVersion3(i)
+        cell = c
+        c.value
+        i += 1
+      }
+    }
+
+    using(repetitions) curve("lazy-simulation-v4") in { n =>
+      var i = 0
+      while (i < n) {
+        val c = new LazySimCellVersion4(i)
         cell = c
         c.value
         i += 1
