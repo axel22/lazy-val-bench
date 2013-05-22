@@ -1,15 +1,11 @@
-package example
 
 
 
-import org.scalameter.api._
+import annotation.{tailrec, switch}
 
 
 
-object LazyValBenchmark extends PerformanceTest.Regression {
-  def persistor = Persistor.None
-
-  val repetitions = Gen.range("size")(1000000, 5000000, 1000000)
+package object example {
 
   class Cell(x: Int) {
     val value = 0
@@ -106,16 +102,17 @@ object LazyValBenchmark extends PerformanceTest.Regression {
     var value_0: Int = _
     private def value_lzycompute(): Int = {
       this.synchronized {
-        (bitmap_0: @annotation.switch) match {
-          case 0 =>
-            bitmap_0 = 1.toByte
-          case 1 =>
+        val b = bitmap_0
+        if (b == 0.toByte) {
+          bitmap_0 = 1.toByte
+        } else {
+          if (b == 1.toByte) {
             bitmap_0 = 2.toByte
-            do this.wait() while (bitmap_0 == 2.toByte)
-            return value_0
-          case 2 =>
-            do this.wait() while (bitmap_0 == 2.toByte)
-            return value_0
+          }
+          while (bitmap_0 == 2.toByte) {
+            this.wait()
+          }
+          return value_0
         }
       }
       val result = 0
@@ -132,122 +129,75 @@ object LazyValBenchmark extends PerformanceTest.Regression {
 
   final class LazySimCellVersion4(x: Int) extends java.util.concurrent.atomic.AtomicInteger {
     var value_0: Int = _
-    @annotation.tailrec final def value(): Int = (get: @annotation.switch) match {
+    @tailrec final def value(): Int = (get: @switch) match {
       case 0 =>
         if (compareAndSet(0, 1)) {
           val result = 0
           value_0 = result
-          if (getAndSet(3) != 1) synchronized { notify() }
+          if (getAndSet(3) != 1) synchronized { notifyAll() }
           result
         } else value()
       case 1 =>
         compareAndSet(1, 2)
         synchronized {
           while (get != 3) wait()
-          notify()
         }
         value_0
       case 2 =>
         synchronized {
           while (get != 3) wait()
-          notify()
         }
         value_0
       case 3 => value_0
     }
   }
 
-  var cell: AnyRef = null
+  final class LazySimCellVersion4General(x: Int) extends LazySimCellWithPublicBitmap {
+    import LazySimCellWithPublicBitmap._
+    var value_0: Int = _
+    @tailrec final def value(): Int = (arfu_0.get(this): @switch) match {
+      case 0 =>
+        if (arfu_0.compareAndSet(this, 0, 1)) {
+          val result = 0
+          value_0 = result
 
-  performance of "LazyVals" config (
-    exec.minWarmupRuns -> 50,
-    exec.maxWarmupRuns -> 150,
-    exec.benchRuns -> 25,
-    exec.independentSamples -> 1,
-    exec.jvmflags -> ""
-  ) in {
-    using(repetitions) curve("non-lazy") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new Cell(i)
-        cell = c
-        c.value
-        i += 1
-      }
+          @tailrec def complete(): Unit = (arfu_0.get(this): @switch) match {
+            case 1 =>
+              if (!arfu_0.compareAndSet(this, 1, 3)) complete()
+            case 2 =>
+              if (arfu_0.compareAndSet(this, 2, 3)) {
+                synchronized { notifyAll() }
+              } else complete()
+          }
+
+          complete()
+          result
+        } else value()
+      case 1 =>
+        arfu_0.compareAndSet(this, 1, 2)
+        synchronized {
+          while (arfu_0.get(this) != 3) wait()
+        }
+        value_0
+      case 2 =>
+        synchronized {
+          while (arfu_0.get(this) != 3) wait()
+        }
+        value_0
+      case 3 => value_0
     }
-
-    using(repetitions) curve("lazy-current") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazyCell(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-boolean-bitmap") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCell(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-byte-bitmap") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCellByteBitmap(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-v2-without-notify") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCellVersion2WithoutNotify(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-v2-with-notify") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCellVersion2(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-v3") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCellVersion3(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
-    using(repetitions) curve("lazy-simulation-v4") in { n =>
-      var i = 0
-      while (i < n) {
-        val c = new LazySimCellVersion4(i)
-        cell = c
-        c.value
-        i += 1
-      }
-    }
-
   }
 
 }
+
+
+
+
+
+
+
+
+
+
 
 
