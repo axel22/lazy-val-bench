@@ -1,6 +1,5 @@
 
 
-
 import annotation.{tailrec, switch}
 
 
@@ -23,7 +22,7 @@ package object example {
       // (the bytecode is otherwise identical to `LazyCell`)
       // this is probably the reason this is 25% slower
       this.synchronized {
-        if (bitmap_0) {
+        if (!bitmap_0) {
           value_0 = 0
           bitmap_0 = true
         }
