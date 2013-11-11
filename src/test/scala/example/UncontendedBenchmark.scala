@@ -9,7 +9,9 @@ import org.scalameter.api._
 class UncontendedBenchmark extends PerformanceTest.Regression with Serializable {
   def persistor = Persistor.None
 
-  val repetitions = Gen.range("size")(1000000, 5000000, 1000000)
+  val repetitions = Gen.range("size")(100000, 500000, 100000)
+
+  val tinyRepetitions = Gen.range("size")(1000, 5000, 10000)
 
   var cell: AnyRef = null
 
@@ -18,7 +20,8 @@ class UncontendedBenchmark extends PerformanceTest.Regression with Serializable 
     exec.maxWarmupRuns -> 150,
     exec.benchRuns -> 25,
     exec.independentSamples -> 1,
-    exec.jvmflags -> ""
+    exec.jvmflags -> "-Xms3072M -Xmx3072M",
+    exec.jvmcmd -> "java8 -server"
   ) in {
     using(repetitions) curve("non-lazy") in { n =>
       var i = 0
@@ -106,6 +109,16 @@ class UncontendedBenchmark extends PerformanceTest.Regression with Serializable 
         val c = new LazySimCellVersion4General(i)
         cell = c
         c.value
+        i += 1
+      }
+    }
+
+    using(tinyRepetitions) curve("lazy-simulation-MH") in { n =>
+      var i = 0
+      while (i < n) {
+        val c = new LazyValsHm(i)
+        cell = c
+        c.value()
         i += 1
       }
     }
