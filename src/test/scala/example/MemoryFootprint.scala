@@ -48,6 +48,11 @@ class MemoryFootprint extends PerformanceTest.Regression {
       array
     }
 
+/*    using(objects[LazyValsHm]) curve("lazy-simulation-MH") in { array =>
+      for (i <- 0 until array.length) array(i) = new LazyValsHm(i)
+      array
+    }
+ */
   }
 
 }
